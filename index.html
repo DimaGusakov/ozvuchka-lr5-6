@@ -54,8 +54,8 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .play .i-pause{display:none}
 .playing .play .i-play{display:none}.playing .play .i-pause{display:block}
 
-.speed{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:16px}
-.speed button{min-height:44px;border-radius:10px;background:var(--soft);font-weight:600;font-size:15px;font-variant-numeric:tabular-nums}
+.speed{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:16px}
+.speed button{min-height:44px;padding:0;border-radius:10px;background:var(--soft);font-weight:600;font-size:14px;letter-spacing:-.2px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .speed button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .lbl{font-size:13px;color:var(--muted);margin:16px 2px 0}
 
@@ -122,7 +122,7 @@ summary{cursor:pointer;font-weight:600;color:var(--accent);min-height:44px;displ
 (function () {
   var T = window.TRACKS, au = document.getElementById('au'), app = document.getElementById('app');
   var $ = function (id) { return document.getElementById(id); };
-  var SPEEDS = [0.75, 1, 1.25, 1.5, 1.75, 2];
+  var SPEEDS = [0.6, 0.75, 1, 1.25, 1.5, 1.75, 2];
   var store = {
     get: function (k, d) { try { var v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
     set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
