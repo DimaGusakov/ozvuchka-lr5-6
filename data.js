@@ -175,5 +175,18 @@ window.TRACKS = [
     "text": "Итоги по Запустить.bat (6 вкладок ЛР 6): 1) Обучение — кривые loss и accuracy за 5 эпох (pre-norm 96) + живое обучение. 2) Сравнение с RNN — на test: TF-IDF + LR 89.6%, GRU 85.9%, LSTM 85.0%, Transformer pre-norm 96 — 86.0% (на уровне GRU), 32 токена — 84.4%, post-norm 96 — 83.3% (16k новостей мало для обучения эмбеддингов с нуля, поэтому TF-IDF выше). Scaling на 2048 токенах: Transformer 4474 мс / 6400 МБ против GRU 369 мс / 175 МБ. 3) Маски — heatmap без маски, padding mask и causal mask. 4) Attention на тексте — на новости о нефти модель предсказывает «Бизнес», главные веса на oil, prices, exports (переключение слоя и головы). 5) Таблица RNN vs Transformer (~1.6–1.7M параметров, accuracy, время, память). 6) Схема encoder block."
    }
   ]
+ },
+ {
+  "id": "LR6_THEORY",
+  "tab": "ЛР 6 · теория",
+  "title": "ЛР 6 · Теория и формулы за 2 минуты",
+  "src": "audio/LR6_theory.mp3?v=1",
+  "chapters": [
+   {
+    "t": 0,
+    "title": "Теория и формулы (Self-Attention, маски, Pre-norm, сложность)",
+    "text": "1) Отличие Self-Attention от RNN: RNN читает последовательно (затухание, нет параллелизма); Self-Attention связывает все слова параллельно за O(1) шаг. 2) Scaled Dot-Product: Attention(Q, K, V) = softmax((QK^T / sqrt(d_k)) + M) V. Деление на sqrt(d_k) возвращает дисперсию скалярного произведения с d_k обратно к 1, чтобы softmax не насыщался и градиенты не затухали. Маска (-inf) ставится ДО softmax: exp(-inf) = 0, PAD не влияет на сумму весов. 3) Multi-Head: d_model режется на H голов по d_k для разных типов связей, затем конкатенация и W_o. 4) Позиции + Pre-norm: к эмбеддингам прибавляются sin/cos разных частот; x + F(LN(x)) даёт прямой путь градиента по x (стабильнее post-norm LN(x + F(x))). 5) Сложность: матрица QK^T имеет размер T×T → память Transformer O(T²), у RNN O(T)."
+   }
+  ]
  }
 ];
