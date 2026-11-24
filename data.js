@@ -179,13 +179,13 @@ window.TRACKS = [
  {
   "id": "LR6_THEORY",
   "tab": "ЛР 6 · теория",
-  "title": "ЛР 6 · Теория и формулы за 2 минуты",
-  "src": "audio/LR6_theory.mp3?v=1",
+  "title": "ЛР 6 · Теория, формулы и строки lab6_full.py",
+  "src": "audio/LR6_theory.mp3?v=2",
   "chapters": [
    {
     "t": 0,
-    "title": "Теория и формулы (Self-Attention, маски, Pre-norm, сложность)",
-    "text": "1) Отличие Self-Attention от RNN: RNN читает последовательно (затухание, нет параллелизма); Self-Attention связывает все слова параллельно за O(1) шаг. 2) Scaled Dot-Product: Attention(Q, K, V) = softmax((QK^T / sqrt(d_k)) + M) V. Деление на sqrt(d_k) возвращает дисперсию скалярного произведения с d_k обратно к 1, чтобы softmax не насыщался и градиенты не затухали. Маска (-inf) ставится ДО softmax: exp(-inf) = 0, PAD не влияет на сумму весов. 3) Multi-Head: d_model режется на H голов по d_k для разных типов связей, затем конкатенация и W_o. 4) Позиции + Pre-norm: к эмбеддингам прибавляются sin/cos разных частот; x + F(LN(x)) даёт прямой путь градиента по x (стабильнее post-norm LN(x + F(x))). 5) Сложность: матрица QK^T имеет размер T×T → память Transformer O(T²), у RNN O(T)."
+    "title": "Теория, формулы и строки lab6_full.py",
+    "text": "1) Self-Attention vs RNN: RNN последовательно сжимает в один вектор; Self-Attention связывает все слова параллельно за O(1). 2) Scaled Dot-Product (стр. 33–47): d_k (стр. 40), (Q @ K^T)/sqrt(d_k) (стр. 41 — возвращает дисперсию к 1, защита от затухания градиентов), masked_fill(~mask, -inf) до softmax (стр. 43–44 — PAD=0), nan_to_num (стр. 46), weights @ V (стр. 47). Маски: padding_mask (стр. 52), causal_mask torch.tril (стр. 58). 3) Multi-Head (стр. 61–78): d_model=96 → 4×24 (стр. 65), split (стр. 71), reshape (стр. 77), W_o (стр. 78). 4) Позиции + Pre-norm: sinusoidal_encoding (стр. 102–107, 129); pre-norm x + F(LN(x)) (стр. 93–96) стабильнее post-norm LN(x + F(x)) (стр. 97–99); masked mean pooling (стр. 138–139). 5) Сложность (scaling, стр. 273): матрица QK^T размера T×T → память Transformer O(T²), у RNN O(T)."
    }
   ]
  }
