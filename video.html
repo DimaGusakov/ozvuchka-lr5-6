@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111418" media="(prefers-color-scheme: dark)">
+<title>Видеоразбор ЛР 6 — целиком и по частям</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232457d6'/%3E%3Cpath d='M12 9v14l11-7z' fill='white'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f6f7f9;--card:#ffffff;--ink:#14181f;--muted:#5f6876;--line:#e3e6eb;
+  --accent:#2457d6;--accent-ink:#ffffff;--soft:#e8eefc;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111418;--card:#1a1e24;--ink:#eef1f5;--muted:#9aa3b0;--line:#2a3039;
+    --accent:#6f9bff;--accent-ink:#0d1117;--soft:#1f2a40;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:400 16px/1.5 system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+  padding:max(14px,env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom))}
+.wrap{max-width:760px;margin:0 auto}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 2px 12px}
+h1{font-size:15px;font-weight:600;color:var(--muted);margin:0;letter-spacing:.2px}
+.navlink{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:10px;
+  background:var(--soft);color:var(--accent);font-weight:600;font-size:14px;text-decoration:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;padding:5px;background:var(--line);border-radius:14px}
+.tabs button{min-height:44px;border-radius:10px;font-weight:600;color:var(--muted);font-size:13.5px;padding:6px 8px;line-height:1.2}
+.tabs button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+.player-card{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.vw{position:relative;background:#000}
+video{display:block;width:100%;aspect-ratio:16/9;background:#000}
+.z{position:absolute;top:0;width:36%;height:75%}.z.l{left:0}.z.r{right:0}
+
+.meta{padding:14px 18px 16px}
+.title{font-size:19px;font-weight:700;margin:0}
+.sub{margin:4px 0 0;color:var(--muted);font-size:14px}
+
+.speed{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:14px}
+.speed button{min-height:40px;padding:0;border-radius:10px;background:var(--soft);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
+.speed button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+
+.lbl{font-size:13px;color:var(--muted);margin:18px 2px 6px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+.list{margin:0;padding:0;list-style:none;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.list li+li{border-top:1px solid var(--line)}
+.list button{width:100%;display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;text-align:left;
+  min-height:52px;padding:10px 14px}
+.list button:hover,.list button:active{background:var(--soft)}
+.list .n{color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+.list .t{font-weight:500;line-height:1.3}
+.list .at{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums;font-family:Consolas,monospace}
+.list button[aria-current="true"]{background:var(--soft)}
+.list button[aria-current="true"] .n,.list button[aria-current="true"] .t{color:var(--accent);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>Видеоразбор ЛР 6 · lab6_full.py</h1>
+    <a class="navlink" href="index.html">🎧 Аудио-шпаргалка</a>
+  </div>
+  <div class="tabs" role="tablist" id="tabs"></div>
+
+  <section class="player-card">
+    <div class="vw">
+      <video id="v" controls playsinline preload="metadata" controlslist="nodownload"></video>
+      <div class="z l" id="zl" title="Двойной клик: −10 сек"></div>
+      <div class="z r" id="zr" title="Двойной клик: +10 сек"></div>
+    </div>
+    <div class="meta">
+      <p class="title" id="title"></p>
+      <p class="sub" id="sub"></p>
+      <div class="speed" id="speed" role="group" aria-label="Скорость"></div>
+    </div>
+  </section>
+
+  <p class="lbl">Разделы</p>
+  <ul class="list" id="list"></ul>
+</div>
+
+<script src="video_data.js"></script>
+<script>
+(function () {
+  var P = window.VIDEO_PARTS || [];
+  if (!P.length) return;
+  var $ = function (id) { return document.getElementById(id); };
+  var v = $('v'), cur = 0, rate = 1, chapIdx = -1;
+  try { rate = +localStorage.getItem('v_rate') || 1; cur = +localStorage.getItem('v_part') || 0; } catch (e) {}
+  if (cur >= P.length) cur = 0;
+  var SPEEDS = [0.75, 1, 1.25, 1.5, 1.75, 2];
+  var fmt = function (s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+
+  SPEEDS.forEach(function (r) {
+    var b = document.createElement('button');
+    b.dataset.r = r; b.textContent = r + '×';
+    b.onclick = function () { setRate(r); };
+    $('speed').appendChild(b);
+  });
+
+  function setRate(r) {
+    rate = r; v.playbackRate = r;
+    try { localStorage.setItem('v_rate', r); } catch (e) {}
+    [].forEach.call($('speed').children, function (b) { b.setAttribute('aria-pressed', String(+b.dataset.r === r)); });
+  }
+
+  function renderTabs() {
+    $('tabs').innerHTML = '';
+    P.forEach(function (p, i) {
+      var b = document.createElement('button');
+      b.textContent = p.tab;
+      b.setAttribute('aria-selected', String(i === cur));
+      b.onclick = function () { if (i !== cur) load(i, false); };
+      $('tabs').appendChild(b);
+    });
+  }
+
+  function load(i, autoplay) {
+    cur = i; chapIdx = -1;
+    try { localStorage.setItem('v_part', i); } catch (e) {}
+    renderTabs();
+    var p = P[cur];
+    $('title').textContent = p.title;
+    $('sub').textContent = 'Длительность: ' + fmt(p.dur);
+    $('list').innerHTML = '';
+    p.chapters.forEach(function (c, k) {
+      var li = document.createElement('li'), b = document.createElement('button');
+      b.innerHTML = '<span class="n">' + (k + 1) + '</span><span class="t"></span><span class="at">' + fmt(c.t) + '</span>';
+      b.querySelector('.t').textContent = c.title;
+      b.onclick = function () { v.currentTime = c.t + 0.05; v.play().catch(function () {}); };
+      li.appendChild(b); $('list').appendChild(li);
+    });
+    v.src = p.file + '?v=' + (window.VIDEO_VER || '1');
+    v.playbackRate = rate;
+    if (autoplay) v.play().catch(function () {});
+  }
+
+  v.addEventListener('loadedmetadata', function () { v.playbackRate = rate; });
+  v.addEventListener('timeupdate', function () {
+    var ch = P[cur].chapters, k = 0;
+    for (var i = 0; i < ch.length; i++) if (v.currentTime >= ch[i].t - 0.1) k = i;
+    if (k !== chapIdx) {
+      chapIdx = k;
+      [].forEach.call($('list').querySelectorAll('button'), function (b, j) { b.setAttribute('aria-current', String(j === k)); });
+    }
+  });
+  v.addEventListener('ended', function () {
+    if (cur > 0 && cur < P.length - 1) load(cur + 1, true);
+  });
+
+  function skip(d) { v.currentTime = Math.max(0, Math.min(v.duration || 1e9, v.currentTime + d)); }
+  function tap(el, d) {
+    var t = null;
+    el.addEventListener('click', function () {
+      if (t) { clearTimeout(t); t = null; skip(d); }
+      else t = setTimeout(function () { t = null; v.paused ? v.play() : v.pause(); }, 260);
+    });
+  }
+  tap($('zl'), -10); tap($('zr'), 10);
+  document.addEventListener('keydown', function (e) {
+    if (e.code === 'Space') { e.preventDefault(); v.paused ? v.play() : v.pause(); }
+    else if (e.key === 'ArrowLeft') skip(-5);
+    else if (e.key === 'ArrowRight') skip(5);
+  });
+
+  setRate(rate);
+  load(cur, false);
+})();
+</script>
+</body>
+</html>
