@@ -43,7 +43,7 @@ video{display:block;width:100%;aspect-ratio:16/9;background:#000}
 .title{font-size:19px;font-weight:700;margin:0}
 .sub{margin:4px 0 0;color:var(--muted);font-size:14px}
 
-.speed{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:14px}
+.speed{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px}
 .speed button{min-height:40px;padding:0;border-radius:10px;background:var(--soft);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
 .speed button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 
@@ -94,7 +94,7 @@ video{display:block;width:100%;aspect-ratio:16/9;background:#000}
   var v = $('v'), cur = 0, rate = 1, chapIdx = -1;
   try { rate = +localStorage.getItem('v_rate') || 1; cur = +localStorage.getItem('v_part') || 0; } catch (e) {}
   if (cur >= P.length) cur = 0;
-  var SPEEDS = [0.75, 1, 1.25, 1.5, 1.75, 2];
+  var SPEEDS = [0.7, 0.75, 1, 1.25, 1.5, 1.75, 2];
   var fmt = function (s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 
   SPEEDS.forEach(function (r) {
