@@ -150,12 +150,25 @@ summary{cursor:pointer;font-weight:600;color:var(--accent);min-height:44px;displ
     $('speed').appendChild(b);
   });
 
+  function syncMediaState() {
+    if (!('mediaSession' in navigator)) return;
+    var ms = navigator.mediaSession;
+    try { ms.playbackState = au.paused ? 'paused' : 'playing'; } catch (e) {}
+    if (ms.setPositionState && isFinite(au.duration) && au.duration > 0) {
+      try {
+        ms.setPositionState({
+          duration: au.duration,
+          playbackRate: au.playbackRate || rate,
+          position: Math.min(au.duration, Math.max(0, au.currentTime || 0))
+        });
+      } catch (e) {}
+    }
+  }
+
   function setRate(r) {
     rate = r; au.playbackRate = r; au.defaultPlaybackRate = r; store.set('rate', r);
     [].forEach.call($('speed').children, function (b) { b.setAttribute('aria-pressed', String(+b.dataset.r === r)); });
-    if ('mediaSession' in navigator && navigator.mediaSession.setPositionState && au.duration) {
-      try { navigator.mediaSession.setPositionState({ duration: au.duration, playbackRate: r, position: au.currentTime }); } catch (e) {}
-    }
+    syncMediaState();
   }
 
   function load(i, autoplay) {
@@ -171,7 +184,7 @@ summary{cursor:pointer;font-weight:600;color:var(--accent);min-height:44px;displ
       var li = document.createElement('li'), b = document.createElement('button');
       b.innerHTML = '<span class="n">' + (k + 1) + '</span><span class="t"></span><span class="at">' + fmt(c.t) + '</span>';
       b.querySelector('.t').textContent = c.title;
-      b.addEventListener('click', function () { seek(c.t + 0.01); au.play(); });
+      b.addEventListener('click', function () { seek(c.t + 0.01); au.play().catch(function () {}); });
       li.appendChild(b); $('list').appendChild(li);
     });
     au.src = tr.src;
@@ -180,13 +193,13 @@ summary{cursor:pointer;font-weight:600;color:var(--accent);min-height:44px;displ
       au.removeEventListener('loadedmetadata', once);
       au.playbackRate = rate;
       if (pos > 1 && pos < au.duration - 2) au.currentTime = pos;
-      $('dur').textContent = fmt(au.duration); render();
-      if (autoplay && wasPlaying) au.play();
+      $('dur').textContent = fmt(au.duration); render(); syncMediaState();
+      if (autoplay && wasPlaying) au.play().catch(function () {});
     });
     meta();
   }
 
-  function seek(t) { if (!au.duration) return; au.currentTime = Math.max(0, Math.min(au.duration - 0.2, t)); render(); }
+  function seek(t) { if (!au.duration) return; au.currentTime = Math.max(0, Math.min(au.duration - 0.2, t)); render(); syncMediaState(); }
   function savePos() { if (au.src && au.duration) store.set('pos_' + T[cur].id, au.currentTime); }
 
   function render() {
@@ -217,22 +230,22 @@ summary{cursor:pointer;font-weight:600;color:var(--accent);min-height:44px;displ
     k = Math.max(0, Math.min(ch.length - 1, k + dir)); seek(ch[k].t + 0.01);
   }
 
-  $('play').addEventListener('click', function () { if (au.paused) au.play(); else au.pause(); });
+  $('play').addEventListener('click', function () { if (au.paused) au.play().catch(function () {}); else au.pause(); });
   $('back').addEventListener('click', function () { seek(au.currentTime - 15); });
   $('fwd').addEventListener('click', function () { seek(au.currentTime + 15); });
   $('bar').addEventListener('input', function () { dragging = true; var d = au.duration || 0; $('cur').textContent = fmt(this.value / 1000 * d); this.style.setProperty('--p', (this.value / 10) + '%'); });
   $('bar').addEventListener('change', function () { dragging = false; seek(this.value / 1000 * (au.duration || 0)); });
 
-  au.addEventListener('play', function () { app.classList.add('playing'); $('play').setAttribute('aria-label', 'Пауза'); au.playbackRate = rate; });
-  au.addEventListener('pause', function () { app.classList.remove('playing'); $('play').setAttribute('aria-label', 'Играть'); savePos(); });
+  au.addEventListener('play', function () { app.classList.add('playing'); $('play').setAttribute('aria-label', 'Пауза'); au.playbackRate = rate; syncMediaState(); });
+  au.addEventListener('pause', function () { app.classList.remove('playing'); $('play').setAttribute('aria-label', 'Играть'); savePos(); syncMediaState(); });
   au.addEventListener('timeupdate', render);
-  au.addEventListener('ended', function () { store.set('pos_' + T[cur].id, 0); });
+  au.addEventListener('ended', function () { store.set('pos_' + T[cur].id, 0); syncMediaState(); });
   document.addEventListener('visibilitychange', savePos);
   window.addEventListener('pagehide', savePos);
 
   if ('mediaSession' in navigator) {
     var ms = navigator.mediaSession, h = function (a, f) { try { ms.setActionHandler(a, f); } catch (e) {} };
-    h('play', function () { au.play(); });
+    h('play', function () { au.play().catch(function () {}); });
     h('pause', function () { au.pause(); });
     h('seekbackward', function (e) { seek(au.currentTime - (e.seekOffset || 15)); });
     h('seekforward', function (e) { seek(au.currentTime + (e.seekOffset || 15)); });

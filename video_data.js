@@ -1,9 +1,10 @@
-window.VIDEO_VER=1795815023;
+window.VIDEO_VER=1795821000;
 window.VIDEO_PARTS=[
  {
   "tab": "Целиком",
   "title": "ЛР 6 целиком: задание, теория, код lab6_full.py, графики",
   "file": "videos/lab6_full.mp4",
+  "audio": "videos/lab6_full.m4a",
   "dur": 416.5,
   "chapters": [
    {
@@ -40,6 +41,7 @@ window.VIDEO_PARTS=[
   "tab": "Часть 1",
   "title": "Часть 1 · Задание и теория",
   "file": "videos/lab6_part1.mp4",
+  "audio": "videos/lab6_part1.m4a",
   "dur": 121.2,
   "chapters": [
    {
@@ -56,6 +58,7 @@ window.VIDEO_PARTS=[
   "tab": "Часть 2",
   "title": "Часть 2 · Код lab6_full.py",
   "file": "videos/lab6_part2.mp4",
+  "audio": "videos/lab6_part2.m4a",
   "dur": 143.9,
   "chapters": [
    {
@@ -80,6 +83,7 @@ window.VIDEO_PARTS=[
   "tab": "Часть 3",
   "title": "Часть 3 · Графики и карта внимания",
   "file": "videos/lab6_part3.mp4",
+  "audio": "videos/lab6_part3.m4a",
   "dur": 151.0,
   "chapters": [
    {

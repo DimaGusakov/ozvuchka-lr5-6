@@ -28,7 +28,7 @@ h1{font-size:15px;font-weight:600;color:var(--muted);margin:0;letter-spacing:.2p
 .navlink{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:10px;
   background:var(--soft);color:var(--accent);font-weight:600;font-size:14px;text-decoration:none}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
-button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 
 .tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:6px;padding:5px;background:var(--line);border-radius:14px}
 .tabs button{min-height:44px;border-radius:10px;font-weight:600;color:var(--muted);font-size:13.5px;padding:6px 8px;line-height:1.2}
@@ -41,6 +41,20 @@ video{display:block;width:100%;aspect-ratio:16/9;background:#000}
   padding:8px 14px;border-radius:999px;font-weight:700;font-size:15px;opacity:0;transition:opacity .18s}
 .hud.l{left:14%}.hud.r{right:14%}.hud.on{opacity:1}
 
+.audio-box{display:none;padding:16px 18px 8px;background:var(--soft);border-bottom:1px solid var(--line)}
+.audio-status{font-size:14px;font-weight:600;color:var(--accent);margin:0 0 10px}
+.player-card.is-audio .vw{display:none}
+.player-card.is-audio .audio-box{display:block}
+
+input[type=range]{width:100%;height:28px;margin:0;background:transparent;-webkit-appearance:none;appearance:none;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;
+  background:linear-gradient(90deg,var(--accent) var(--p,0%),var(--line) var(--p,0%))}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:var(--line)}
+input[type=range]::-moz-range-progress{height:6px;border-radius:3px;background:var(--accent)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;margin-top:-7px;border-radius:50%;background:var(--accent);border:3px solid var(--card)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);border:3px solid var(--card)}
+.times{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+
 .meta{padding:14px 18px 16px}
 .title{font-size:19px;font-weight:700;margin:0}
 .sub{margin:4px 0 0;color:var(--muted);font-size:14px}
@@ -49,6 +63,11 @@ video{display:block;width:100%;aspect-ratio:16/9;background:#000}
 .ctl button{min-height:44px;border-radius:11px;background:var(--soft);color:var(--ink);font-weight:700;font-size:15px;
   display:flex;align-items:center;justify-content:center;gap:6px;touch-action:manipulation}
 .ctl button.main{background:var(--accent);color:var(--accent-ink)}
+
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.modes button{min-height:40px;padding:6px 10px;border-radius:10px;background:var(--soft);color:var(--ink);font-weight:600;font-size:14px}
+.modes button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.modes button:disabled{opacity:.45;cursor:default}
 
 .speed{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}
 .speed button{min-height:40px;padding:0;border-radius:10px;background:var(--soft);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
@@ -65,6 +84,7 @@ video{display:block;width:100%;aspect-ratio:16/9;background:#000}
 .list .at{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums;font-family:Consolas,monospace}
 .list button[aria-current="true"]{background:var(--soft)}
 .list button[aria-current="true"] .n,.list button[aria-current="true"] .t{color:var(--accent);font-weight:600}
+.foot{margin:16px 2px 0;font-size:12.5px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -75,19 +95,28 @@ video{display:block;width:100%;aspect-ratio:16/9;background:#000}
   </div>
   <div class="tabs" role="tablist" id="tabs"></div>
 
-  <section class="player-card">
+  <section class="player-card" id="pcard">
     <div class="vw">
-      <video id="v" controls playsinline preload="metadata"></video>
+      <video id="v" controls playsinline preload="metadata" x-webkit-airplay="allow"></video>
       <div class="hud l" id="hl">−10 с</div>
       <div class="hud r" id="hr">+10 с</div>
+    </div>
+    <div class="audio-box" id="abox">
+      <p class="audio-status">🎧 Фоновый режим — играет при сворачивании и выключенном экране</p>
+      <input type="range" id="abar" min="0" max="1000" value="0" step="1" aria-label="Позиция">
+      <div class="times"><span id="acur">0:00</span><span id="adur">0:00</span></div>
     </div>
     <div class="meta">
       <p class="title" id="title"></p>
       <p class="sub" id="sub"></p>
       <div class="ctl">
         <button id="bback" type="button" aria-label="Назад на 10 секунд">↺ 10 с</button>
-        <button id="bplay" class="main" type="button" aria-label="Играть / Пауза">▶ / ⏸</button>
+        <button id="bplay" class="main" type="button" aria-label="Играть / Пауза">▶ Играть</button>
         <button id="bfwd" type="button" aria-label="Вперёд на 10 секунд">10 с ↻</button>
+      </div>
+      <div class="modes">
+        <button id="bbg" type="button" aria-pressed="false">🎧 Фон (без паузы)</button>
+        <button id="bpip" type="button" aria-pressed="false" hidden>⧉ В окне (PiP)</button>
       </div>
       <div class="speed" id="speed" role="group" aria-label="Скорость"></div>
     </div>
@@ -95,47 +124,218 @@ video{display:block;width:100%;aspect-ratio:16/9;background:#000}
 
   <p class="lbl">Разделы</p>
   <ul class="list" id="list"></ul>
+  <p class="foot">Позиция и скорость сохраняются. На телефоне при сворачивании браузер паузит видео — включите «В окне (PiP)» или «Фон (без паузы)».</p>
 </div>
 
+<audio id="a" preload="none"></audio>
 <script src="video_data.js"></script>
 <script>
 (function () {
   var P = window.VIDEO_PARTS || [];
   if (!P.length) return;
   var $ = function (id) { return document.getElementById(id); };
-  var v = $('v'), cur = 0, rate = 1, chapIdx = -1;
-  try { rate = +localStorage.getItem('v_rate') || 1; cur = +localStorage.getItem('v_part') || 0; } catch (e) {}
-  if (cur >= P.length) cur = 0;
+  var v = $('v'), a = $('a'), pcard = $('pcard');
+  var cur = 0, rate = 1, chapIdx = -1, audioMode = false, dragging = false, lastSave = 0;
+  var store = {
+    get: function (k, d) { try { var s = localStorage.getItem(k); return s === null ? d : s; } catch (e) { return d; } },
+    set: function (k, val) { try { localStorage.setItem(k, String(val)); } catch (e) {} }
+  };
+  rate = +store.get('v_rate', 1) || 1;
+  cur = +store.get('v_part', 0) || 0;
+  if (cur < 0 || cur >= P.length) cur = 0;
+  audioMode = store.get('v_mode', 'video') === 'audio';
+
   var SPEEDS = [0.7, 0.75, 1, 1.25, 1.5, 1.75, 2];
-  var fmt = function (s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  var fmt = function (s) { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  var verUrl = function (u) { return u + '?v=' + (window.VIDEO_VER || '1'); };
+  function active() { return audioMode ? a : v; }
 
   SPEEDS.forEach(function (r) {
     var b = document.createElement('button');
+    b.type = 'button';
     b.dataset.r = r; b.textContent = r + '×';
     b.onclick = function () { setRate(r); };
     $('speed').appendChild(b);
   });
 
+  function updateSpeedUI() {
+    [].forEach.call($('speed').children, function (b) { b.setAttribute('aria-pressed', String(+b.dataset.r === rate)); });
+  }
+
   function setRate(r) {
-    rate = r; v.playbackRate = r;
-    try { localStorage.setItem('v_rate', r); } catch (e) {}
-    [].forEach.call($('speed').children, function (b) { b.setAttribute('aria-pressed', String(+b.dataset.r === r)); });
+    rate = r;
+    v.playbackRate = r; v.defaultPlaybackRate = r;
+    a.playbackRate = r; a.defaultPlaybackRate = r;
+    store.set('v_rate', r);
+    updateSpeedUI();
+    updatePositionState();
+  }
+
+  function clampTime(el, t) {
+    var d = isFinite(el.duration) && el.duration > 0 ? el.duration : (P[cur].dur || 0);
+    if (d > 0.2) return Math.max(0, Math.min(d - 0.1, t));
+    return Math.max(0, t);
+  }
+
+  function seekElement(el, target) {
+    var t = clampTime(el, target);
+    if (el.readyState >= 1 && isFinite(el.duration) && el.duration > 0) {
+      el._pendingSeek = null;
+      el.currentTime = t;
+    } else {
+      el._pendingSeek = t;
+    }
+  }
+
+  function savePos() {
+    var m = active();
+    var d = isFinite(m.duration) && m.duration > 0 ? m.duration : (P[cur].dur || 0);
+    if (d > 0 && m.currentTime > 0) store.set('v_pos_' + cur, m.currentTime.toFixed(2));
+  }
+
+  function updatePlayBtn() {
+    var m = active();
+    $('bplay').textContent = m.paused ? '▶ Играть' : '⏸ Пауза';
+  }
+
+  function renderAudioBar() {
+    var d = isFinite(a.duration) && a.duration > 0 ? a.duration : (P[cur].dur || 0);
+    var t = a._pendingSeek != null ? a._pendingSeek : (a.currentTime || 0);
+    var p = d ? Math.max(0, Math.min(1, t / d)) : 0;
+    if (!dragging) {
+      $('abar').value = Math.round(p * 1000);
+      $('acur').textContent = fmt(t);
+    }
+    $('abar').style.setProperty('--p', (p * 100) + '%');
+    $('adur').textContent = fmt(d);
+  }
+
+  function updateChapters() {
+    var m = active();
+    var t = m._pendingSeek != null ? m._pendingSeek : (m.currentTime || 0);
+    var ch = P[cur].chapters, k = 0;
+    for (var i = 0; i < ch.length; i++) if (t >= ch[i].t - 0.1) k = i;
+    if (k !== chapIdx) {
+      chapIdx = k;
+      [].forEach.call($('list').querySelectorAll('button'), function (b, j) { b.setAttribute('aria-current', String(j === k)); });
+      updateMediaMeta();
+    }
+  }
+
+  function updateMediaMeta() {
+    if (!('mediaSession' in navigator)) return;
+    var p = P[cur], ch = p.chapters[Math.max(0, chapIdx)];
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: ch ? ch.title : p.title,
+        artist: p.title,
+        album: 'Видеоразбор ЛР 6'
+      });
+    } catch (e) {}
+  }
+
+  function updatePositionState() {
+    if (!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState) return;
+    var m = active();
+    if (!isFinite(m.duration) || m.duration <= 0) return;
+    try {
+      navigator.mediaSession.setPositionState({
+        duration: m.duration,
+        playbackRate: m.playbackRate || rate,
+        position: Math.min(m.duration, Math.max(0, m.currentTime || 0))
+      });
+    } catch (e) {}
+  }
+
+  function updatePlaybackState() {
+    if (!('mediaSession' in navigator)) return;
+    try { navigator.mediaSession.playbackState = active().paused ? 'paused' : 'playing'; } catch (e) {}
+    updatePositionState();
+  }
+
+  function hasPiP() {
+    return (typeof v.webkitSupportsPresentationMode === 'function' && v.webkitSupportsPresentationMode('picture-in-picture')) ||
+      !!(document.pictureInPictureEnabled && !v.disablePictureInPicture);
+  }
+
+  function isPiP() {
+    return (v.webkitPresentationMode === 'picture-in-picture') || (document.pictureInPictureElement === v);
+  }
+
+  function updateModeButtons() {
+    pcard.classList.toggle('is-audio', audioMode);
+    var bbg = $('bbg');
+    bbg.setAttribute('aria-pressed', String(audioMode));
+    bbg.textContent = audioMode ? '🎬 Вернуть видео' : '🎧 Фон (без паузы)';
+    var bpip = $('bpip');
+    bpip.hidden = !hasPiP();
+    bpip.disabled = audioMode;
+    bpip.setAttribute('aria-pressed', String(!audioMode && isPiP()));
+  }
+
+  function exitPiP() {
+    try {
+      if (v.webkitPresentationMode === 'picture-in-picture' && typeof v.webkitSetPresentationMode === 'function') {
+        v.webkitSetPresentationMode('inline');
+      } else if (document.pictureInPictureElement === v && document.exitPictureInPicture) {
+        document.exitPictureInPicture().catch(function () {});
+      }
+    } catch (e) {}
+  }
+
+  function ensureSource(el, url, isAudio) {
+    if (el.dataset.src !== url) {
+      if (isAudio) el.preload = 'metadata';
+      el.dataset.src = url;
+      el.src = url;
+      el.load();
+    }
+  }
+
+  function setAudioMode(on) {
+    if (on === audioMode) return;
+    var prev = active();
+    var t = prev._pendingSeek != null ? prev._pendingSeek : (prev.currentTime || 0);
+    var wasPlaying = !prev.paused;
+    if (on) exitPiP();
+    prev.pause();
+
+    audioMode = on;
+    store.set('v_mode', on ? 'audio' : 'video');
+    updateModeButtons();
+
+    var p = P[cur], next = active();
+    var url = verUrl(on ? (p.audio || p.file) : p.file);
+    ensureSource(next, url, on);
+    seekElement(next, t);
+    next.playbackRate = rate;
+    next.defaultPlaybackRate = rate;
+    if (wasPlaying) next.play().catch(function () {});
+
+    if (on) renderAudioBar();
+    updatePlayBtn();
+    updateChapters();
+    updatePlaybackState();
   }
 
   function renderTabs() {
     $('tabs').innerHTML = '';
     P.forEach(function (p, i) {
       var b = document.createElement('button');
+      b.type = 'button';
       b.textContent = p.tab;
       b.setAttribute('aria-selected', String(i === cur));
-      b.onclick = function () { if (i !== cur) load(i, false); };
+      b.onclick = function () { if (i !== cur) load(i, false, false); };
       $('tabs').appendChild(b);
     });
   }
 
-  function load(i, autoplay) {
+  function load(i, autoplay, resetPos) {
+    if (v.dataset.src || a.dataset.src) savePos();
+    v.pause();
+    a.pause();
     cur = i; chapIdx = -1;
-    try { localStorage.setItem('v_part', i); } catch (e) {}
+    store.set('v_part', i);
     renderTabs();
     var p = P[cur];
     $('title').textContent = p.title;
@@ -143,64 +343,185 @@ video{display:block;width:100%;aspect-ratio:16/9;background:#000}
     $('list').innerHTML = '';
     p.chapters.forEach(function (c, k) {
       var li = document.createElement('li'), b = document.createElement('button');
+      b.type = 'button';
       b.innerHTML = '<span class="n">' + (k + 1) + '</span><span class="t"></span><span class="at">' + fmt(c.t) + '</span>';
       b.querySelector('.t').textContent = c.title;
-      b.onclick = function () { v.currentTime = c.t + 0.05; v.play().catch(function () {}); };
+      b.onclick = function () {
+        var m = active();
+        seekElement(m, c.t + 0.05);
+        m.play().catch(function () {});
+        if (audioMode) renderAudioBar();
+        updateChapters();
+      };
       li.appendChild(b); $('list').appendChild(li);
     });
-    v.src = p.file + '?v=' + (window.VIDEO_VER || '1');
-    v.playbackRate = rate;
-    if (autoplay) v.play().catch(function () {});
+
+    var pos = resetPos ? 0 : (+store.get('v_pos_' + cur, 0) || 0);
+    if (!(pos > 1 && pos < p.dur - 2)) pos = 0;
+
+    var m = active();
+    var url = verUrl(audioMode ? (p.audio || p.file) : p.file);
+    ensureSource(m, url, audioMode);
+    if (pos > 0) seekElement(m, pos);
+    else m._pendingSeek = null;
+
+    m.playbackRate = rate;
+    m.defaultPlaybackRate = rate;
+    if (autoplay) m.play().catch(function () {});
+
+    updateModeButtons();
+    if (audioMode) renderAudioBar();
+    updatePlayBtn();
+    updateChapters();
+    updateMediaMeta();
+    updatePlaybackState();
   }
 
-  v.addEventListener('loadedmetadata', function () { v.playbackRate = rate; });
-  v.addEventListener('timeupdate', function () {
-    var ch = P[cur].chapters, k = 0;
-    for (var i = 0; i < ch.length; i++) if (v.currentTime >= ch[i].t - 0.1) k = i;
-    if (k !== chapIdx) {
-      chapIdx = k;
-      [].forEach.call($('list').querySelectorAll('button'), function (b, j) { b.setAttribute('aria-current', String(j === k)); });
-    }
-  });
-  v.addEventListener('ended', function () {
-    if (cur > 0 && cur < P.length - 1) load(cur + 1, true);
-  });
+  function bindMedia(el) {
+    el.addEventListener('loadedmetadata', function () {
+      el.playbackRate = rate;
+      el.defaultPlaybackRate = rate;
+      if (el._pendingSeek != null) {
+        var target = clampTime(el, el._pendingSeek);
+        el._pendingSeek = null;
+        el.currentTime = target;
+      }
+      if (el !== active()) return;
+      updateModeButtons();
+      if (audioMode) renderAudioBar();
+      updateChapters();
+      updatePlaybackState();
+    });
+    el.addEventListener('play', function () {
+      el.playbackRate = rate;
+      el.defaultPlaybackRate = rate;
+      if (el !== active()) return;
+      updatePlayBtn();
+      updatePlaybackState();
+    });
+    el.addEventListener('pause', function () {
+      if (el !== active()) return;
+      savePos();
+      updatePlayBtn();
+      updatePlaybackState();
+    });
+    el.addEventListener('ratechange', function () {
+      if (el !== active()) return;
+      if (Math.abs(el.playbackRate - rate) > 0.001) {
+        rate = el.playbackRate;
+        store.set('v_rate', rate);
+        updateSpeedUI();
+      }
+      updatePositionState();
+    });
+    el.addEventListener('timeupdate', function () {
+      if (el !== active()) return;
+      if (audioMode) renderAudioBar();
+      updateChapters();
+      var now = Date.now();
+      if (now - lastSave > 2500) { lastSave = now; savePos(); }
+    });
+    el.addEventListener('ended', function () {
+      if (el !== active()) return;
+      store.set('v_pos_' + cur, 0);
+      updatePlayBtn();
+      updatePlaybackState();
+      if (cur > 0 && cur < P.length - 1) load(cur + 1, true, true);
+    });
+  }
+  bindMedia(v);
+  bindMedia(a);
 
   var hudT = { l: null, r: null };
   function flashHud(d) {
+    if (audioMode) return;
     var el = $(d < 0 ? 'hl' : 'hr'), k = d < 0 ? 'l' : 'r';
     el.textContent = (d < 0 ? '−' : '+') + Math.abs(d) + ' с';
     el.classList.add('on');
     clearTimeout(hudT[k]);
     hudT[k] = setTimeout(function () { el.classList.remove('on'); }, 550);
   }
+  function seekTo(target) {
+    var m = active();
+    seekElement(m, target);
+    if (audioMode) renderAudioBar();
+    updateChapters();
+    updatePositionState();
+  }
   function skip(d) {
-    if (!v.duration || !isFinite(v.duration)) return;
-    var target = Math.max(0, Math.min(v.duration - 0.1, v.currentTime + d));
-    v.currentTime = target;
+    var m = active();
+    var dur = isFinite(m.duration) && m.duration > 0 ? m.duration : (P[cur].dur || 0);
+    if (!dur) return;
+    var base = m._pendingSeek != null ? m._pendingSeek : (m.currentTime || 0);
+    seekTo(base + d);
     flashHud(d);
   }
-  function togglePlay() { v.paused ? v.play().catch(function () {}) : v.pause(); }
+  function chapJump(dir) {
+    var ch = P[cur].chapters, m = active();
+    var t = m._pendingSeek != null ? m._pendingSeek : (m.currentTime || 0);
+    var k = Math.max(0, chapIdx);
+    if (dir < 0 && t - ch[k].t > 3) return seekTo(ch[k].t + 0.05);
+    k = Math.max(0, Math.min(ch.length - 1, k + dir));
+    seekTo(ch[k].t + 0.05);
+  }
+  function togglePlay() {
+    var m = active();
+    if (m.paused) m.play().catch(function () {});
+    else m.pause();
+  }
+
   $('bback').addEventListener('click', function () { skip(-10); });
   $('bfwd').addEventListener('click', function () { skip(10); });
   $('bplay').addEventListener('click', togglePlay);
-  v.addEventListener('play', function () { $('bplay').textContent = '⏸ Пауза'; });
-  v.addEventListener('pause', function () { $('bplay').textContent = '▶ Играть'; });
-  v.addEventListener('ended', function () { $('bplay').textContent = '▶ Играть'; });
+  $('bbg').addEventListener('click', function () { setAudioMode(!audioMode); });
+  $('bpip').addEventListener('click', function () {
+    if (audioMode) return;
+    if (typeof v.webkitSetPresentationMode === 'function' && v.webkitSupportsPresentationMode('picture-in-picture')) {
+      v.webkitSetPresentationMode(v.webkitPresentationMode === 'picture-in-picture' ? 'inline' : 'picture-in-picture');
+    } else if (document.pictureInPictureEnabled) {
+      if (document.pictureInPictureElement === v) document.exitPictureInPicture().catch(function () {});
+      else v.requestPictureInPicture().catch(function () {});
+    }
+  });
+  v.addEventListener('webkitpresentationmodechanged', updateModeButtons);
+  v.addEventListener('enterpictureinpicture', updateModeButtons);
+  v.addEventListener('leavepictureinpicture', updateModeButtons);
+
+  $('abar').addEventListener('input', function () {
+    dragging = true;
+    var d = isFinite(a.duration) && a.duration > 0 ? a.duration : (P[cur].dur || 0);
+    $('acur').textContent = fmt(this.value / 1000 * d);
+    this.style.setProperty('--p', (this.value / 10) + '%');
+  });
+  $('abar').addEventListener('change', function () {
+    dragging = false;
+    var d = isFinite(a.duration) && a.duration > 0 ? a.duration : (P[cur].dur || 0);
+    seekTo(this.value / 1000 * d);
+  });
+
+  document.addEventListener('visibilitychange', savePos);
+  window.addEventListener('pagehide', savePos);
+
   if ('mediaSession' in navigator) {
-    try {
-      navigator.mediaSession.setActionHandler('seekbackward', function (e) { skip(-(e && e.seekOffset || 10)); });
-      navigator.mediaSession.setActionHandler('seekforward', function (e) { skip(e && e.seekOffset || 10); });
-    } catch (e) {}
+    var ms = navigator.mediaSession;
+    var h = function (act, fn) { try { ms.setActionHandler(act, fn); } catch (e) {} };
+    h('play', function () { active().play().catch(function () {}); });
+    h('pause', function () { active().pause(); });
+    h('seekbackward', function (e) { skip(-((e && e.seekOffset) || 10)); });
+    h('seekforward', function (e) { skip((e && e.seekOffset) || 10); });
+    h('seekto', function (e) { if (e && e.seekTime != null) seekTo(e.seekTime); });
+    h('previoustrack', function () { chapJump(-1); });
+    h('nexttrack', function () { chapJump(1); });
   }
   document.addEventListener('keydown', function (e) {
+    if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
     if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
     else if (e.key === 'ArrowLeft') skip(-10);
     else if (e.key === 'ArrowRight') skip(10);
   });
 
   setRate(rate);
-  load(cur, false);
+  load(cur, false, false);
 })();
 </script>
 </body>
