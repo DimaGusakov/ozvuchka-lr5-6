@@ -37,7 +37,6 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .player-card{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
 .vw{position:relative;background:#000}
 video{display:block;width:100%;aspect-ratio:16/9;background:#000}
-.z{position:absolute;top:18%;width:34%;height:54%;z-index:3;touch-action:manipulation;-webkit-user-select:none;user-select:none}.z.l{left:0}.z.r{right:0}
 .hud{position:absolute;top:50%;transform:translateY(-50%);z-index:4;pointer-events:none;background:rgba(17,20,24,.78);color:#fff;
   padding:8px 14px;border-radius:999px;font-weight:700;font-size:15px;opacity:0;transition:opacity .18s}
 .hud.l{left:14%}.hud.r{right:14%}.hud.on{opacity:1}
@@ -78,9 +77,7 @@ video{display:block;width:100%;aspect-ratio:16/9;background:#000}
 
   <section class="player-card">
     <div class="vw">
-      <video id="v" controls playsinline preload="metadata" controlslist="nodownload"></video>
-      <div class="z l" id="zl" title="Двойной тап: −10 сек"></div>
-      <div class="z r" id="zr" title="Двойной тап: +10 сек"></div>
+      <video id="v" controls playsinline preload="metadata"></video>
       <div class="hud l" id="hl">−10 с</div>
       <div class="hud r" id="hr">+10 с</div>
     </div>
@@ -184,31 +181,6 @@ video{display:block;width:100%;aspect-ratio:16/9;background:#000}
     flashHud(d);
   }
   function togglePlay() { v.paused ? v.play().catch(function () {}) : v.pause(); }
-  function tap(el, d) {
-    var lastTouch = 0, clickTimer = null;
-    el.addEventListener('touchend', function (e) {
-      var now = Date.now();
-      if (now - lastTouch < 360) {
-        e.preventDefault();
-        clearTimeout(clickTimer); clickTimer = null;
-        lastTouch = 0;
-        skip(d);
-      } else {
-        lastTouch = now;
-      }
-    }, { passive: false });
-    el.addEventListener('dblclick', function (e) {
-      e.preventDefault();
-      clearTimeout(clickTimer); clickTimer = null;
-      skip(d);
-    });
-    el.addEventListener('click', function (e) {
-      if (e.detail > 1) return;
-      clearTimeout(clickTimer);
-      clickTimer = setTimeout(function () { clickTimer = null; togglePlay(); }, 220);
-    });
-  }
-  tap($('zl'), -10); tap($('zr'), 10);
   $('bback').addEventListener('click', function () { skip(-10); });
   $('bfwd').addEventListener('click', function () { skip(10); });
   $('bplay').addEventListener('click', togglePlay);
