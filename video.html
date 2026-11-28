@@ -37,13 +37,21 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .player-card{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
 .vw{position:relative;background:#000}
 video{display:block;width:100%;aspect-ratio:16/9;background:#000}
-.z{position:absolute;top:0;width:36%;height:75%}.z.l{left:0}.z.r{right:0}
+.z{position:absolute;top:0;width:34%;height:72%;z-index:3;touch-action:manipulation;-webkit-user-select:none;user-select:none}.z.l{left:0}.z.r{right:0}
+.hud{position:absolute;top:50%;transform:translateY(-50%);z-index:4;pointer-events:none;background:rgba(17,20,24,.78);color:#fff;
+  padding:8px 14px;border-radius:999px;font-weight:700;font-size:15px;opacity:0;transition:opacity .18s}
+.hud.l{left:14%}.hud.r{right:14%}.hud.on{opacity:1}
 
 .meta{padding:14px 18px 16px}
 .title{font-size:19px;font-weight:700;margin:0}
 .sub{margin:4px 0 0;color:var(--muted);font-size:14px}
 
-.speed{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:14px}
+.ctl{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:8px;margin-top:12px}
+.ctl button{min-height:44px;border-radius:11px;background:var(--soft);color:var(--ink);font-weight:700;font-size:15px;
+  display:flex;align-items:center;justify-content:center;gap:6px;touch-action:manipulation}
+.ctl button.main{background:var(--accent);color:var(--accent-ink)}
+
+.speed{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}
 .speed button{min-height:40px;padding:0;border-radius:10px;background:var(--soft);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
 .speed button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 
@@ -71,12 +79,19 @@ video{display:block;width:100%;aspect-ratio:16/9;background:#000}
   <section class="player-card">
     <div class="vw">
       <video id="v" controls playsinline preload="metadata" controlslist="nodownload"></video>
-      <div class="z l" id="zl" title="Двойной клик: −10 сек"></div>
-      <div class="z r" id="zr" title="Двойной клик: +10 сек"></div>
+      <div class="z l" id="zl" title="Двойной тап: −10 сек"></div>
+      <div class="z r" id="zr" title="Двойной тап: +10 сек"></div>
+      <div class="hud l" id="hl">−10 с</div>
+      <div class="hud r" id="hr">+10 с</div>
     </div>
     <div class="meta">
       <p class="title" id="title"></p>
       <p class="sub" id="sub"></p>
+      <div class="ctl">
+        <button id="bback" type="button" aria-label="Назад на 10 секунд">↺ 10 с</button>
+        <button id="bplay" class="main" type="button" aria-label="Играть / Пауза">▶ / ⏸</button>
+        <button id="bfwd" type="button" aria-label="Вперёд на 10 секунд">10 с ↻</button>
+      </div>
       <div class="speed" id="speed" role="group" aria-label="Скорость"></div>
     </div>
   </section>
@@ -154,19 +169,58 @@ video{display:block;width:100%;aspect-ratio:16/9;background:#000}
     if (cur > 0 && cur < P.length - 1) load(cur + 1, true);
   });
 
-  function skip(d) { v.currentTime = Math.max(0, Math.min(v.duration || 1e9, v.currentTime + d)); }
+  var hudT = { l: null, r: null };
+  function flashHud(d) {
+    var el = $(d < 0 ? 'hl' : 'hr'), k = d < 0 ? 'l' : 'r';
+    el.textContent = (d < 0 ? '−' : '+') + Math.abs(d) + ' с';
+    el.classList.add('on');
+    clearTimeout(hudT[k]);
+    hudT[k] = setTimeout(function () { el.classList.remove('on'); }, 550);
+  }
+  function skip(d) {
+    if (!v.duration || !isFinite(v.duration)) return;
+    var target = Math.max(0, Math.min(v.duration - 0.1, v.currentTime + d));
+    v.currentTime = target;
+    flashHud(d);
+  }
+  function togglePlay() { v.paused ? v.play().catch(function () {}) : v.pause(); }
   function tap(el, d) {
-    var t = null;
-    el.addEventListener('click', function () {
-      if (t) { clearTimeout(t); t = null; skip(d); }
-      else t = setTimeout(function () { t = null; v.paused ? v.play() : v.pause(); }, 260);
+    var lastTouch = 0, clickTimer = null;
+    el.addEventListener('touchend', function (e) {
+      var now = Date.now();
+      if (now - lastTouch < 360) {
+        e.preventDefault();
+        lastTouch = 0;
+        skip(d);
+      } else {
+        lastTouch = now;
+      }
+    }, { passive: false });
+    el.addEventListener('dblclick', function (e) {
+      e.preventDefault();
+      clearTimeout(clickTimer); clickTimer = null;
+      skip(d);
+    });
+    el.addEventListener('click', function (e) {
+      if (e.detail > 1) return;
+      clearTimeout(clickTimer);
+      clickTimer = setTimeout(function () { clickTimer = null; togglePlay(); }, 220);
     });
   }
   tap($('zl'), -10); tap($('zr'), 10);
+  $('bback').addEventListener('click', function () { skip(-10); });
+  $('bfwd').addEventListener('click', function () { skip(10); });
+  $('bplay').addEventListener('click', togglePlay);
+  if ('mediaSession' in navigator) {
+    try {
+      navigator.mediaSession.setActionHandler('seekbackward', function (e) { skip(-(e && e.seekOffset || 10)); });
+      navigator.mediaSession.setActionHandler('seekforward', function (e) { skip(e && e.seekOffset || 10); });
+    } catch (e) {}
+  }
   document.addEventListener('keydown', function (e) {
-    if (e.code === 'Space') { e.preventDefault(); v.paused ? v.play() : v.pause(); }
-    else if (e.key === 'ArrowLeft') skip(-5);
-    else if (e.key === 'ArrowRight') skip(5);
+    if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+    else if (e.key === 'ArrowLeft') skip(-10);
+    else if (e.key === 'ArrowRight') skip(10);
   });
 
   setRate(rate);
